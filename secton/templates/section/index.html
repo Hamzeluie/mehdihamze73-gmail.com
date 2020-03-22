@@ -1,0 +1,13 @@
+{% if section %}
+<ul>
+    {% for obj in section %}
+        <li>{{ obj.name }}</li>
+        <a href="/section/{{ group.id }}/{{ obj.id }}/update/"> update </a>
+        <a href="/section/{{ group.id }}/{{ obj.id }}/delete/"> delete </a>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No products group are available.</p>
+{% endif %}
+<a href="/section/{{ group.id }}/create/"> create new question </a>
+

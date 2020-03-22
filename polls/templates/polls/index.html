@@ -1,0 +1,12 @@
+{% if latest_question_list %}
+    <ul>
+    {% for question in latest_question_list %}
+        <li><a href="/polls/{{ question.id }}/choice">{{ question.question_text }}</a></li>
+        <a href="/polls/{{ question.id }}/update"> update </a>
+        <a href="/polls/{{ question.id }}/delete"> delete </a>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No polls are available.</p>
+{% endif %}
+<a href="/polls/create/"> create new question </a>

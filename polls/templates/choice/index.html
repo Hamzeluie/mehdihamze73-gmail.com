@@ -1,0 +1,14 @@
+{% if choices %}
+    <ul>
+    {% for choice in choices %}
+        <li>{{ choice.choice_text }}
+            <a href="/polls/{{ question.id }}/choice/{{ choice.id }}/update/"> update </a>
+            <a href="/polls/{{ question.id }}/choice/{{ choice.id }}/delete/"> delete </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>there is no any choice saved for this Question.</p>
+
+{% endif %}
+    <p><a href="/polls/{{ question.id }}/choice/create">create a choice for this question.</a></p>

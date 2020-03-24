@@ -10,9 +10,25 @@ from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.settings import api_settings
+from rest_framework.authtoken.models import Token
 
 
 "Login Page"
+
+
+class CustomAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'email': user.email
+        })
 
 
 class UserLogin(ObtainAuthToken):
@@ -25,32 +41,35 @@ class UserLogin(ObtainAuthToken):
 class HelloApiView(APIView):
     serializer_class = UserProfileSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (UserProfilePermission,
-                          IsAuthenticatedOrReadOnly)
+    # permission_classes = (UserProfilePermission,
+    #                       IsAuthenticatedOrReadOnly)
 
     def get(self, request, pk=None):
         if pk is not None:
             users = get_object_or_404(UserProfile, pk=pk)
             sir = self.serializer_class(users)
+            return Response(sir.data)
         else:
             users = UserProfile.objects.all()
             sir = self.serializer_class(users, many=True)
-        return Response(sir.data)
+            return Response(sir.data)
+        return Response(self.serializer_class)
 
     def post(self, request, pk=None):
-        serializer = self.serializer_class(data=request.data)
+        user = request.data
+        serializer = self.serializer_class(data=user)
         if serializer.is_valid():
-
-            # serializer.save()
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
         user = get_object_or_404(UserProfile, pk=pk)
         req_data = request.data
+        print(req_data)
         serializer = UserProfileSerializer(instance=user, data=req_data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            user_profile = serializer.save()
+            serializer.save()
             message = f'user profile {pk} updated successfully'
         else:
             message = f'cant update user profile {pk} update is  unsuccessful'

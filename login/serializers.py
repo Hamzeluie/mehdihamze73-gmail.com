@@ -9,9 +9,12 @@ class UserProfileSerializer(ModelSerializer):
     # password = serializers.CharField(max_length=255)
     class Meta:
         model = UserProfile
-        fields = ('name',
+        fields = ('id',
+                  'name',
                   'email',
-                  'password'
+                  'is_active',
+                  'password',
+                  'is_superuser',
                   )
         extra_kwargs = {
                 'password': {
@@ -26,6 +29,8 @@ class UserProfileSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.email = validated_data.get('email', instance.email)
+        instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.is_superuser = validated_data.get('is_superuser', instance.is_superuser)
         instance.password = validated_data.get('password', instance.password)
         instance.save()
         return instance

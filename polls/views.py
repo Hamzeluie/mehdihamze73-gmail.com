@@ -24,37 +24,126 @@ class QuestionViewSet(ViewSet):
     serializer_class = QuestionModelSerializer
 
     def list(self, request, pk=None):
-        pass
+        if pk is not None:
+            obj = get_object_or_404(Questions, pk=pk)
+            serializer = self.serializer_class(obj)
+        else:
+            obj = Questions.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
 
     def create(self, request, pk=None):
-        pass
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={'message': 'question saved'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(data={'message': 'question did not save'}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk):
-        pass
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'Question {pk} updated successfully'
+            else:
+                message = f'cant update Question id {pk}'
+        else:
+            message = 'object is None'
+        return Response(message)
 
     def partial_update(self, request, pk):
-        pass
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'Question {pk} updated successfully'
+            else:
+                message = f'cant update Question id {pk}'
+        else:
+            message = 'object is None'
+        return Response(message)
+
+    def destroy(self, request, pk):
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': 'object successfully deleted'})
+        return Response({'message': 'object is None(can not find any object to remove)'})
+
+    def retrieve(self, request, pk=None):
+        query_set = Questions.objects.all()
+        if pk is not None:
+            obj = get_object_or_404(query_set, pk=pk)
+            serializer = self.serializer_class(obj)
+            return Response(serializer.data)
+        return Response({'message': 'primary key is None'})
 
 
 class ChoiceViewSet(ViewSet):
     serializer_class = ChoiceModelSerializer
 
     def list(self, request, pk=None):
-        pass
+        if pk is not None:
+            obj = get_object_or_404(Choice, pk=pk)
+            serializer = self.serializer_class(obj)
+        else:
+            obj = Choice.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
 
     def create(self, request, pk=None):
-        pass
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk):
+        obj = get_object_or_404(Choice, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(obj)
+            return Response(serializer.data)
+        return Response({'message': 'can not find any Choice'})
+
+    def destroy(self, request, pk):
+        obj = get_object_or_404(Choice, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'Choice id {pk} successfully deleted'})
+        return Response({'message': f'can not find anu Choice with id {pk}'})
 
     def update(self, request, pk):
-        pass
+        obj = get_object_or_404(Choice, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'Choice with id {pk} successfully updated'})
+            else:
+                return Response({'message': f'can not update Choice with id {pk}'})
+        else:
+            return Response({'message': 'can not any object'})
 
     def partial_update(self, request, pk):
-        pass
+        obj = get_object_or_404(Choice, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'Choice with id {pk} successfully updated'})
+            else:
+                return Response({'message': f'can not update Choice with id {pk}'})
+        else:
+            return Response({'message': 'can not any object'})
 
 
 class QuestionModelViewSet(ModelViewSet):
     serializer_class = QuestionModelSerializer
-    queryset = Questions
+    queryset = Questions.objects.all()
     authentication_classes = (TokenAuthentication,)
     filter_backends = (filters.SearchFilter,)
     search_filter = ('question_text',)
@@ -63,11 +152,10 @@ class QuestionModelViewSet(ModelViewSet):
 
 class ChoiceModelViewSet(ModelViewSet):
     serializer_class = ChoiceModelSerializer
-    queryset = Choice
+    queryset = Choice.objects.all()
     authentication_classes = (TokenAuthentication,)
     filter_backends = (filters.SearchFilter,)
     search_filter = ('choice_text',)
-
 
 """rest_framework ApiView"""
 

@@ -6,6 +6,188 @@ from django.views import generic
 from .form import QuestionModelForm, ChoiceModelForm
 
 
+from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework.views import APIView
+from .serializers import QuestionModelSerializer, ChoiceModelSerializer
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework import filters
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+
+"""rest_framework ViewSet"""
+
+
+class QuestionViewSet(ViewSet):
+    serializer_class = QuestionModelSerializer
+
+    def list(self, request, pk=None):
+        pass
+
+    def create(self, request, pk=None):
+        pass
+
+    def update(self, request, pk):
+        pass
+
+    def partial_update(self, request, pk):
+        pass
+
+
+class ChoiceViewSet(ViewSet):
+    serializer_class = ChoiceModelSerializer
+
+    def list(self, request, pk=None):
+        pass
+
+    def create(self, request, pk=None):
+        pass
+
+    def update(self, request, pk):
+        pass
+
+    def partial_update(self, request, pk):
+        pass
+
+
+class QuestionModelViewSet(ModelViewSet):
+    serializer_class = QuestionModelSerializer
+    queryset = Questions
+    authentication_classes = (TokenAuthentication,)
+    filter_backends = (filters.SearchFilter,)
+    search_filter = ('question_text',)
+    # permission_classes =
+
+
+class ChoiceModelViewSet(ModelViewSet):
+    serializer_class = ChoiceModelSerializer
+    queryset = Choice
+    authentication_classes = (TokenAuthentication,)
+    filter_backends = (filters.SearchFilter,)
+    search_filter = ('choice_text',)
+
+
+"""rest_framework ApiView"""
+
+
+class QuestionApiview(APIView):
+    serializer_class = QuestionModelSerializer
+    # authentication_classes = TokenAuthentication
+
+    def get(self, request, pk=None):
+        if pk is not None:
+            obj = get_object_or_404(Questions, pk=pk)
+            serializer = self.serializer_class(obj)
+            return Response(serializer.data)
+        else:
+            obj = Questions.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+            return Response(serializer.data)
+        return Response({'message': 'hello'})
+
+    def post(self, request, pk=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, pk):
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                message = f'Question {pk} successfully partial updated'
+            else:
+                message = f'can not update Question {pk}'
+        else:
+            message = f'Query string Object is None'
+
+        return Response({'message': message})
+
+    def patch(self, request, pk):
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                message = f'Question {pk} successfully updated'
+            else:
+                message = f'can not update Question {pk}'
+        else:
+            message = f'Query string Object is None'
+        return Response({'message': message})
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(Questions, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'object id {pk} delete successfully'})
+        return Response({'message': f'can not delete object id {pk}'})
+
+
+class ChoiceApiview(APIView):
+    serializer_class = ChoiceModelSerializer
+    # authentication_classes = TokenAuthentication
+
+    def get(self, request, pk=None, c_id=None):
+        if pk is not None:
+            obj = get_object_or_404(Choice, pk=pk)
+            serializer = self.serializer_class(obj)
+            return Response(serializer.data)
+        else:
+            obj = Choice.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+            return Response(serializer.data)
+
+    def post(self, request, pk=None, c_id=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        obj = get_object_or_404(Choice, id=pk)
+        if obj is not None:
+            serializer = ChoiceModelSerializer(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                message = 'updated successfully'
+            else:
+                message = 'can not updated'
+        else:
+            message = 'object is None'
+
+        return Response({'message': message})
+
+    def patch(self, request, pk):
+        obj = get_object_or_404(Choice, id=pk)
+        if obj is not None:
+            serializer = ChoiceModelSerializer(instance=obj, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                message = 'updated successfully'
+            else:
+                message = 'can not updated'
+        else:
+            message = 'object is None'
+
+        return Response({'message': message})
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(Choice, id=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({"message": "object Deleted"})
+        return Response({"message": "object is None"})
+
+
+"""Pure Django"""
+
+
 def index(request):
     object = Questions.objects.order_by('-pub_date')[:5]
     context = {
@@ -112,7 +294,6 @@ class QuestionUpdateView(generic.UpdateView, QuestionPollsObjectsMixin):
 
     def get(self, request, question_id=None, *args, **kwargs):
         obj = self.get_objecttt()
-        print('===================================>>>>>>>>>>>>>>>>>>',obj.question_text)
         context = {}
         if obj is not None:
             form = QuestionModelForm(instance=obj)

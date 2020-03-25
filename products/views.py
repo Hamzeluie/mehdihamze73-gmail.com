@@ -3,6 +3,243 @@ from django.http import HttpResponse
 from .models import ProductGroup, Product
 from .form import *
 from django.views import generic
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework import filters
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
+from .serializers import *
+
+
+"""Model ViewSet rest_framework"""
+
+
+class ModelViewSetProduct(ModelViewSet):
+    serializer_class = ProductModelSerializer
+    queryset = Product.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    filter_backends = (filters.SearchFilter, )
+    search_filter = ('name', 'price',)
+
+
+class ModelViewSetProductGroup(ModelViewSet):
+    serializer_class = ProductGroupModelSerializer
+    queryset = ProductGroup.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    filter_backends = (filters.SearchFilter,)
+    search_filter = ('group_name',)
+
+
+"""ViewSet rest_framework"""
+
+
+class ViewSetProductGroup(ViewSet):
+    serializer_class = ProductGroupModelSerializer
+    model = ProductGroup
+
+    def list(self, request, pk=None):
+        obj = self.model.objects.all()
+        serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'successfully deleted object id {pk}'})
+        return Response({'message': f'can not deleted object id {pk}'})
+
+    def partial_update(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'successfully updated object id {pk}'})
+            return Response({'message': f'can not update object id {pk}'})
+        return Response({'message': f'can not find any object with id {pk}'})
+
+    def retrieve(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        serializer = self.serializer_class(obj)
+        return Response(serializer.data)
+
+    def update(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'successfully updated object id {pk}'})
+            return Response({'message': f'can not update object id {pk}'})
+        return Response({'message': f'can not find any object with id {pk}'})
+
+    def create(self, request, pk=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ViewSetProduct(ViewSet):
+    serializer_class = ProductModelSerializer
+    model = Product
+
+    def list(self, request, pk=None):
+        obj = self.model.objects.all()
+        serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'successfully deleted object id {pk}'})
+        return Response({'message': f'can not deleted object id {pk}'})
+
+    def partial_update(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'successfully updated object id {pk}'})
+            return Response({'message': f'can not update object id {pk}'})
+        return Response({'message': f'can not find any object with id {pk}'})
+
+    def retrieve(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        serializer = self.serializer_class(obj)
+        return Response(serializer.data)
+
+    def update(self, request, pk=None):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': f'successfully updated object id {pk}'})
+            return Response({'message': f'can not update object id {pk}'})
+        return Response({'message': f'can not find any object with id {pk}'})
+
+    def create(self, request, pk=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+"""ApiView rest_framework"""
+
+
+class ApiProductGroupView(APIView):
+    serializer_class = ProductGroupModelSerializer
+    model = ProductGroup
+
+    def get(self, request, pk=None):
+        if pk is not None:
+            obj = get_object_or_404(self.model, pk=pk)
+            serializer = self.serializer_class(obj)
+        else:
+            obj = self.model.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, pk=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'object {pk} updated successfully'
+            else:
+                message = f'can not update object {pk}'
+        else:
+            message = f'there is no any object with id {pk}'
+        return Response({'message': message})
+
+    def patch(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'object {pk} updated successfully'
+            else:
+                message = f'can not update object {pk}'
+        else:
+            message = f'there is no any object with id {pk}'
+        return Response({'message': message})
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'successfully delete object id {pk}'})
+        return Response({'message': f'can not delete object id {pk}'})
+
+
+class ApiProductView(APIView):
+    serializer_class = ProductModelSerializer
+
+    def get(self, request, pk=None):
+        if pk is not None:
+            obj = get_object_or_404(Product, pk=pk)
+            serializer = self.serializer_class(obj)
+        else:
+            obj =Product.objects.all()
+            serializer = self.serializer_class(obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, pk=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        obj = get_object_or_404(Product, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'object {pk} updated successfully'
+            else:
+                message = f'can not update object {pk}'
+        else:
+            message = f'there is no any object with id {pk}'
+        return Response({'message': message})
+
+    def patch(self, request, pk):
+        obj = get_object_or_404(Product, pk=pk)
+        if obj is not None:
+            serializer = self.serializer_class(instance=obj, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                message = f'object {pk} updated successfully'
+            else:
+                message = f'can not update object {pk}'
+        else:
+            message = f'there is no any object with id {pk}'
+        return Response({'message': message})
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(Product, pk=pk)
+        if obj is not None:
+            obj.delete()
+            return Response({'message': f'successfully delete object id {pk}'})
+        return Response({'message': f'can not delete object id {pk}'})
 
 
 '''Product Group view classes'''

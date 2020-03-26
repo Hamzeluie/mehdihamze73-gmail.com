@@ -15,10 +15,27 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 from .views import *
+
+
+router = DefaultRouter()
+router.register('viewset_sectiongroup', ViewSetSectionGroup, basename='SectionGroup')
+router.register('model_viewset_sectiongroup', ModelViewSetSectionGroup, basename='ModelSectionGroup')
+
+router.register('viewset_section', ViewSetSection, basename='Section')
+router.register('model_viewset_section', ModelViewSetSection, basename='ModelSection')
 
 app_name = 'section'
 urlpatterns = [
+    path('viewset/', include(router.urls), name='viewset'),
+
+    path('apiview/', ApiViewSectionGroup.as_view()),
+    path('apiview/<int:pk>/', ApiViewSectionGroup.as_view()),
+
+    path('apiview/section/', ApiViewSectionGroup.as_view()),
+    path('apiview/section/<int:pk>/', ApiViewSectionGroup.as_view()),
+
     path('', SectionGroupIndexView.as_view(), name='home'),
     path('create/', SectionGroupCreateView.as_view(), name='group_create'),
     path('<int:group_id>/delete/', SectionGroupDeleteView.as_view(), name='group_delete'),
